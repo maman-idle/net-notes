@@ -1,0 +1,41 @@
+Create Router's VLAN interface in Packet Tracer:
+
+enable
+
+vlan database
+vlan 4 name Management
+exit
+
+conf t
+
+interface vlan 4
+ip address 172.17.0.1 255.255.255.0
+no shut
+
+interface f0/3/0
+switchport access vlan 4
+
+do show vlan
+do show ip interface brief
+
+
+
+Open SSH connection on Router:
+
+enable
+conf t
+
+hostname R0
+ip domain-name test.net
+user cisco privilege 15 secret supersecret
+crypto key generate rsa 1024
+ip ssh version 2
+
+line vty 0 15
+login local
+transport input ssh
+exit
+
+
+***
+Remember that you need to add additional switching port for the SVI and access the configured VLAN with it in order to make the SVI become up/up.

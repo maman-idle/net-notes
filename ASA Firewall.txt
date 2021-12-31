@@ -1,0 +1,70 @@
+ASA Firewall
+
+Understand where the inside network, outside network, and DMZ are.
+A new ASA Firewall CLI is configured to prompt password input when you try to enter the privilege mode. But there is no password so just press "Enter".
+The default configuration of Ethernet0/0 is on VLAN 2 which is the outside network.
+
+Command changes:
+#show vlan == #show switch vlan
+#show ip int brief == #show int ip brief
+#show ip route == #show route
+(config)# ip route <input default route params> == (config)# route <name of VLAN to route to> <input default route params>
+
+Configuring NAT using ASA outside interface IP address:
+- Create an object-network (some kind of variable that save a subnet/host configuration/properties)
+- Inside the object-network interface, assign it to the subnet that need the NAT service
+- Configure NAT using "nat (VLAN inside, VLAN outside) dynamic interface"
+*Note: this configuration already use Port address translation
+
+Configuring Modular Policy Framework (MPF)
+MPF is divided into three different maps:
+1. Class Map -> Identify traffic
+2. Policy Map -> Dispatch some actions to identified traffic
+3. Service Map -> The way to implement the policy
+
+#Class Map
+- Create the class map -> (conf)# class-map <Name>
+- Configure class map to match using default-inspection-traffic
+- Exit
+
+#Policy Map
+- Create the policy map -> (conf)# policy-map <Name>
+- Map the policy map to the class map that has been created -> (conf-pmap)#class <class map name>
+- Inside the mapped class map configuration, use inspect to available protocol that need for inspection (in the scenario I try to inspect ICMP) -> (conf-pmap-c)# inspect icmp
+- Exit
+
+#Service Policy
+- Config. the created Policy Map as global policy -> (conf)#service-policy <Policy map name> global
+- You can also configure the policy to only available on certain interface
+
+Configuring DHCP
+- Add dhcp pool adress using -> (config)#dhcpd address <ip start>-<ip end> <Vlan name>
+- Setup the DNS, you can setup the DNS to specific VLAN interface too
+- Enable dhcp -> (config)#dhcpd enable <VLAN name>
+*Note that the dhcp only able to add 32 adressess into the dhcp pool
+
+Configure simple AAA and SSH connection to inside and outside network
+- Create username and password
+- Create domain name
+- Create the RSA key preferably using 1024 modulus (Packet tracer won't connect you using SSH if you run this command, so skip it in packet tracer)
+- Configure AAA local authentication using ssh -> (config)# aaa authentication ssh console LOCAL
+- Enable SSH connection using inside/outside interface -> (config)# ssh <permitted network/host> <netmask> <VLAN name>
+
+Configure ACLs to enable connection from outside to DMZ
+- Create DMZ object-network
+	>configure the IP host as the DMZ server IP address
+	>configure static NAT -> (config-network-object)# nat (<DMZ VLAN>,<Outside VLAN>) static <Global IP address>
+- Create access list, example permitting all ICMP traffic to DMZ server -> (config)# access-list <ACL Name> permit icmp any host <DMZ Server IP>
+- Apply the created ACL to the respective interface (outside or inside), example -> (config)# access-group <ACL name> <in/out> interface <VLAN name>
+
+ASA Firewall Basic Conf.
+- Configure the Inside virtual interface with highest security level
+- Configure the Outside virtual interface with security level lower than Inside network 
+- Establish default route to ISP router 
+- Configure NAT 
+- Setup MPF
+- Setup DHCP for the Inside network
+- Setup simple AAA server and SSH connection
+- Configure the DMZ virtual interface with with security level lower than Inside network
+	*In packet tracer, there is limitation of configuring more than 2 VLANs. So, you need to use "(config-if)# no forward interface vlan <vlan number>" inside the interface VLAN configuration.
+- Create ACLs that enable connection from outside to DMZ

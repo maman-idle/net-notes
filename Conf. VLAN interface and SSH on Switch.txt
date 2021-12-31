@@ -1,0 +1,45 @@
+Creating a VLAN Interface on Switch:
+
+enable
+conf t
+
+ip default-gateway 192.168.1.1
+
+vlan 4
+name Management
+exit
+
+interface vlan 4
+ip address 192.168.1.3 255.255.255.0
+no shut
+
+interface f0/1
+switchport mode access
+switchport access vlan 4
+exit
+
+do show ip interface brief
+do show vlan
+
+
+Creating an SSH connection on Switch via Vlan interface:
+
+enable
+conf t
+
+hostname S1
+ip domain-name test.net
+username bob privilege 15 secret p0W3rfU11p4$$
+crypto key generate rsa 1024
+ip ssh version 2
+
+line vty 0 15
+login local
+transport input ssh
+exit
+
+
+***
+Remember to set the trunk port for port that connect to default gateway, so that end devices can communicate to the other networks/VLANs.
+
+Remember to config. inter-VLAN routing on router port (that designated as default gateway), so that PC from other network can SSH the switch.

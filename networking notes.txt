@@ -1,0 +1,260 @@
+-Speed is measured in bits per second not Bytes. Because the data entered in bit by bit not per bytes. But data on harddrive is measured in Bytes.
+
+-Cabling : 
+ -Use straight through cable to connect any device (except   Switch) to Switch.
+ -Use cross-over cable to connect PC, Router, or Firewall to any device other than Switch. Use this cable to     connect Switch to another Switch.
+ -If the device support Auto-MDIX, you can ignore all those rule above.
+ -Use roll-over cable to connect PC to console port in Router or Switch.
+
+-Dynamic Routing
+1. Distance Vector
+2. Link State Routing
+3. Hybrid
+
+
+==================================
+VLAN
+==================================
+TRUNKING SWITCH CONF.
+1. Enter the chosen interface mode that will be selected as trunk.
+2. Use 'switchport mode trunk' to enable trunking, if rejected :
+	2.5 Use switchport trunk encapsulation dot1q, to use 802.1q encapsulation mode. Then use command number 2. 
+3. Allowed your Vlans to access trunk using 'switchport trunk allowed vlan <VId, VId, etc>' in the TRUNK interface configuration.
+4. Set the Native Vlan, using command 'switchport trunk native vlan <Vlan number>' from the Trunk interface configuration. (WARNING : Make sure native vlan is matched with the opposing native Vlan from other Switche's Trunk port).
+
+ROUTER ON A STICK
+1. Go to the interface that need to be configured as 'stick'.
+2. Turn on the interface using 'no shutdown'.
+3. Go to sub interface using 'interface <interface>/<number>.<vlan number>'. Ex: interface GigabitEthernet0/2.30 
+4. Use encapsulation using 'encapsulation dot1q <vlan number>'
+5. Assign interface IP address as Gateway
+
+MULTILAYER SWITCH INTER-VLAN ROUTING
+1. Enable routing using "ip routing" in configuration terminal.
+2. Create VLAN.
+3. Create SVI. 
+4. Assign IP on VLAN interface/SVI.
+5. Assign the port that connect to access switch as trunk.
+
+
+***
+IP Phone
+-For IP Phone, u can directly connect it to Switch then a PC can connect to the Switch via IP Phone.
+-Assign access mode for the switchport connected to IP Phone, accessing VLAN for PC.
+-IP Phone VLAN, u need to assign it using "(config-if)# switchport voice vlan <vlan_id>"
+
+Disabling DTP
+-Assign the switchport to trunk
+-switchport nonegotiate
+
+=============================================================================================
+
+-STP -> a protocol in layer 2 to create a free-loop network connection.
+
+-Spanning Tree Protocol (Steps) :
+1. Pick a Root Bridge (Root Switch).
+2. Calculate cost for every path to root bridge.
+3. Pick a Root Port for every Switch (except the Root Switch) to communicate with the Root Switch. 
+4. Pick Designated Ports.
+5. Pick an Alternate Port.
+
+-DHCP IPv6 Stateful (Conf. steps) :
+1. Enable ipv6 unicast routing
+2. Define a DHCPv6 pool name
+3. Configure DHCPv6 pool (addr prefix, dns server, domain name, etc)
+4. Bind DHCPv6 pool to an interface (use 'ipv6 nd managed-config-flag')
+5. Verify using 'show ipv6 dhcp binding' or 'show ipv6 dhcp pool'
+
+-Enable router as DHCPv6 client  (conf. steps) :
+1. Enable ipv6 unicast routing
+2. Enable link local address in selected interface
+3. Use 'ipv6 address dhcp' to obtain ipv6 address from dhcp server
+
+-Enable router as DHCPv6 relay agent (conf. steps) :
+1. Use 'ipv6 dhcp relay destination <DHCP Server IPv6> <Relay Router interface to access DHCPv6 server> in interface that connect to LAN which need DHCPv6 server service. Ex:
+'ipv6 relay destination 2001:db8:acad:1::2 G0/0'
+2. Verify using 'show ipv6 dhcp interface' or binding
+ 
+-Enable router as DHCPv6 stateless server (conf. steps) :
+1. Enable ipv6 unicast routing
+2. Define a DHCPv6 pool name
+3. Configure DHCPv6 pool (dns server, domain name).
+4. Bind DHCPv6 pool to an interface (use 'ipv6 nd other-config-flag').
+5. Verify using 'show ipv6 dhcp binding' or 'show ipv6 dhcp pool'.
+
+-Enable router as DHCPv6 server
+1. Enable ipv6 unicast routing
+2. Define a DHCPv6 pool name
+3. Configure DHCPv6 pool (dns server, domain name).
+4. Set an interface as DHCPv6 server (#ipv6 dhcp server <DHCPv6 pool>)
+5. Verify using 'show ipv6 dhcp binding' or 'show ipv6 dhcp pool'.
+
+-Configuring HSRP
+1. Make sure that the subnet is same.
+2. On the first router, select the interface that will be defined as virtual gateway.
+3. On the selected interface config., activate hsrp version 2 using 'standby version 2', version 1 hsrp only support ipv4.
+4. Define the ipv4 address and standby group for the virtual hsrp interface using, 'standby <group_number> ip <ipv4>'.
+5. Change the standby priority for the router using 'standby priority <number>'. Note: the default priority is 100, priority is needed for selecting the active router in hsrp. Higher priority is prefered than the lower.
+6. On second router (or others), you can repeat the process number 2, 3, and 4 (5 is optional if u want the first router become the active router).
+Note : Use 'standby <group_number> preempt' in hsrp interface to re-elect active and standby router. 
+
+====================================================================================================
+-NAT Static
+1. Map the IP inside local with IP inside global -> (config)# ip nat inside source static <IP inside local> <IP inside global>
+2. Configure interafaces (inside and outside) which participate on translating the address.
+
+-NAT Dynamic
+1. Create IP inside global pool.
+2. Create access-list for permitted local address.
+3. Configure dynamic nat using created acl as 'the list' source and assign 'the pool' using created ip inside pool.
+4. Configure interfaces (inside and outside).
+
+-PAT (single inside global address)
+1. Create access list for permitted inside local.
+2. Configure PAT to use interface as inside global address. ex: (config#)ip nat inside source list 1 interface gigabitEthernet0/0 overload (g0/0 should have an IP global).
+3. Configure interfaces (inside and outside)
+
+-PAT (pooled inside global)
+1. Create IP inside global pool.
+2. Create access-list for permitted local address.
+3. Configure PAT to use configured pool.
+4. Configure interfaces (inside and outside).
+
+====================================================================================================
+
+-DHCP Snooping (mitigate against DHCP Starvation and DHCP Spoofing)(check client hardware address(chaddr) in dhcp msg)
+1. how to enable globally
+2. how to enable in vlan
+=================================
+2.5 HOW to disable dhcp snooping information option on switch (option82, one of many dhcp options that created from dhcp relay agent). If dhcp snooping is configured, SWITCH which receives dhcp discover from client will send dhcp packet with option82 even though it is not dhcp relay agent, this act will make the dhcp discover packet dropped on the next switch/router because it's coming from untrusted port.
+=================================
+3. how to set up trusted ports
+4. how to config limit rate of dhcp packets
+5. how to recover from err-disable from dhcp rate limiting [packet tracer doesnt support this]
+
+
+-Dynamic ARP Inspection (mitigate against ARP Spoofing)
+1. how to enable
+2. setting up ports for trusted port
+3. how to config the validation method
+
+##############[packet tracer doesnt support these features]#####################
+4. how to config the limit rate of packets received in specific burst interval 
+5. how to create arp ACL for mac address that dont listed on dhcp snooping binding table
+6. how to recover from err-disable from arp rate limiting
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SWITCHING, ROUTING, AND WIRELESS ESSENTIALS QUEST
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+1. Master configuring basic Switch
+    a. Hostname
+    b. Encrypt all plaintext
+    c. Create secret/password for console
+    d. Secret/password for exec privilege mode
+    e. Disable domain lookup
+    f. Create Switch Virtual Interface
+    g. Setup SSH
+        i. Create username (use privilege level) and password/secret
+        ii. Create domain name
+        iii. Create RSA key
+        iv. Setup vty line, so it only accept ssh connection
+        v. Login against local database
+        vi. Make sure that the switch use the latest version of ssh
+    h. Enable switchport port security
+    i. Set minimum password length -> (config)#security passwords min-length <integer>
+    j. Set maximum login attempt and penalty for exceeding threshold login attempt
+    k. Set banner
+    l. Set default gateway so SVI can be accessed
+    m. Shutdown unused ports and put to unused vlan number
+
+2. Master configuring basic Router
+    a. Hostname
+    b. Encrypt all plaintext
+    c. Create secret/password for console and exec privilege mode
+    d. Shutdown domain lookup
+    f. Assign proper VLSM (Variable Length Subnet Mask) for ipv4 subnet
+    g. Create user with privilege level 15
+    h. Setup SSH connection -> use SSH level 2 -> (config)#ip ssh version <version>
+    i. Configure static route
+    j. Configure loopback interface
+    k. Configure ipv6 address to interface
+    l. Configure ipv6 link local
+
+3. Configure DHCP and DHCPv6 on Router
+    a. DHCP server
+    b. DHCP relay agent
+    c. DHCPv6 stateless 
+    d. DHCPv6 SLAAC + Server
+    e. DHCPv6 stateful
+    f. DHCP client and DHCPv6 stateless or stateful client
+
+4. Configure VLANs
+    a. Trunking
+    b. Assigning access mode to ports
+    c. Assigning trunk native VLAN to unused VLAN for security purpose
+
+5. Configure Inter VLAN Routing
+    a. Legacy
+    b. Router on a stick
+    c. Layer 3 Switch
+
+6. Configure Etherchannel
+    *Shutdown ports before configuring Etherchannel
+    6.1 Switch: you can specify the port-channel group of port without creating it.
+    6.2 Router: you need to create the interface port-channel before assign it to some ports.
+    6.3 Switch to Switch etherchannel.
+    6.4 Swtich to Router etherchannel (https://www.cisco.com/c/en/us/support/docs/switches/catalyst-2950-series-switches/24042-158.html). Packet tracer doesn't support port-channel subinterface. 
+        a. LACP ~ mode active and passive
+        b. PAgP ~ mode desireable and auto
+
+7. Understand Spanning Tree Protocol concept
+8. Understand Layer 2 threats and mitigations
+9. Configure HSRP (Hot Standby Router Protocol) from First Hop Redundancy Protocol concept.
+
+
+=======================================================================================================================
+Enterprise Network, Security, and Automation
+===================================================================
+Big Concepts to Understand :
+- WAN Concept in general
+- WAN Solutions n Technology
+- VPN
+- QoS
+- SNMP
+- Save and restore router/switch configuration to/from usb, tftp, or other
+- Save and restore router/switch OS to/from usb, tftp, or other
+- IoS password recovery
+- Firewall (not in CCNA but try to search it)
+
+=====================================================================
+Default Route : ip route 0.0.0.0 0.0.0.0 <next_hop_ip_addr || interface_output>
+Host Route    : ip route <ip_host> 255.255.255.255 <next_hop_ip_addr || interface_output>
+
+
+Configuring OSPF reference bandwidth: ALWAYS see the link connect to what type of connection!
+Example: To make a GigabitEthernet to cost 10, normally u use reference bandwidth of 10000 (10000/1000 = 10). BUT if the GigabitEthernet connection connect to FastEthernet, then it will use the speed of FastEthernet. So if u set the reference bandwidth to 10000, the cost of that "GigabitEthernet" will be 100 (10000/100 = 100). 
+
+======================================================================
+Basic Security:
+1. Secure password for line console
+2. Secure password for user priviledge mode
+2.5 Encrypt all plain-text password
+3. Shutdown all unused ports
+4. Put all unused ports in 'black hole' VLAN
+5. Enable port security on active ports
+5.1 Disable autonegotiate trunking on trunk ports (switch)
+5.2 Put non-trunk port into access mode (switch)
+6. Use arp inspection against arp spoofing?
+7. Use dhcp snooping against dhcp spoofing?
+
+
+=================================
+PORT SECURITY CONF.
+=================================
+1. Go to Switch interface that need port security.
+2. 'switchport port-security' to enable port security.
+3. Setting the permitted mac-address.
+4. Setting maximum mac-address that can acces port.
+5. Setting violation mode.
